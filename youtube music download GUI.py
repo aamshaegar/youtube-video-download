@@ -12,15 +12,14 @@ __name__ = "__MAIN__"
 
 def main():
     
-    queue = Queue()
-    #queue2 = Queue()
-    #actual_file_size = 0
+    notify_queue = Queue()
+    notify_queue2 = Queue()
     search_text = ""
     videos_list = []
     get_video_value = []
     actual_image = ""
     rename_text = ""
-
+    number_bar = 0
 
 
     file_list_column = [
@@ -52,8 +51,9 @@ def main():
             sg.In(size=(26, 1), enable_events=True, key="RENAME_TEXT", font=('Calibri Bold', 12))],
         
         [sg.Radio('Download Video 360p', 1, default=True, enable_events=True, key="RADIO1"),
-        sg.Radio('Download Video 720p', 1, enable_events=True, key="RADIO2")]
+        sg.Radio('Download Video 720p', 1, enable_events=True, key="RADIO2"),],
         #,[sg.ProgressBar(100, orientation='h', size=(26, 1), border_width=4, key='progbar',bar_color=['Green','Blue'])],
+        [sg.Multiline("", size=(36, 4), text_color="Azure", background_color="Black", disabled=True,  font=('Calibri Bold', 12), enable_events=True, key="LOG")]
     ]
 
     # ----- Full layout -----
@@ -65,11 +65,7 @@ def main():
             sg.Column(image_viewer_column, key="COLUMN1"),
             sg.VSeperator(),
             sg.Column(image_menu, visible=False, key= "COLUMN")]
-        
     ]
-
-    def prog_bar(i):
-        return [[sg.ProgressBar(100, orientation='h', size=(26, 1), border_width=4, key=("progbar", i),bar_color=['Green','Blue'])]]
 
 
     check_temp_size()
@@ -79,11 +75,19 @@ def main():
 
     while True:
         event, values = window.read(timeout=2000)      
-            
-        if not queue.empty():
-            val = queue.get_nowait()
-            if val is not None: sg.popup_notify(val + " has been successfully downloaded!")
-            
+    
+    
+        if not notify_queue2.empty():
+            val = notify_queue2.get_nowait()
+            if val is not None: 
+                window['LOG'].update(val[:36] + '\n', append=True)
+
+
+        if not notify_queue.empty():
+            val = notify_queue.get_nowait()
+            if val is not None: 
+                sg.popup_notify(val + " has been successfully downloaded!")
+       
         
         if event == "Exit" or event == sg.WIN_CLOSED:
             os._exit(0)
@@ -97,7 +101,7 @@ def main():
                 
             else:
                 try:
-                    videos_list = three_params(search_text, 15, "audio")
+                    videos_list = three_params(search_text, 20, "audio")
                 except Exception:
                     sg.popup("No connection. Please, connect to internet!\nRetry?", title="Info", button_type=sg.POPUP_BUTTONS_OK)
                 lista = [el['title'] for el in videos_list]
@@ -154,11 +158,11 @@ def main():
             else:
                 popup_wait()
                 try:
-                    if rename_text != "": t = threading.Thread(target=download_thread, args = (queue, get_video_value, "audio", values['RADIO1'], rename_text))
-                    else: t = threading.Thread(target=download_thread, args = (queue, get_video_value, "audio", values['RADIO1'], None))
+                    number_bar += 1
+                    if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text))
+                    else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None))
                     t.start()             
-
-                    
+             
                 
                 except RegexMatchError as reg:
                     regex_error()   
@@ -177,10 +181,10 @@ def main():
                 
                 popup_wait()
                 try:
-                    
+                    number_bar += 1
                     resolution = values['RADIO1']
-                    if rename_text != "": t = threading.Thread(target=download_thread, args = (queue, get_video_value, "video", resolution, rename_text))
-                    else: t = threading.Thread(target=download_thread, args = (queue, get_video_value, "video", resolution ,None))
+                    if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text))
+                    else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None))
                     t.start()
             
             

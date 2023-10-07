@@ -69,15 +69,13 @@ def check_temp_size():
             os.remove("./temp/" + file)
 
 
-def download_thread(queue, link, type, low_resolution, rename_text):
+def download_thread(number, notify_queue, notify_queue2, link, type, low_resolution, rename_text):
     """Download content in a separate thread"""
 
-    #queue2.put()
+    new_text = str(number)  + ") Downloading " + link['title'] + "..."
+    notify_queue2.put(new_text)
     print("starting downloading", link['title'])
     if type == "audio": select_download_format_type(link['link'], type, rename=rename_text)
     else: select_download_format_type(link['link'], type, low_resolution=low_resolution, rename=rename_text)
+    notify_queue.put(str(number)  + ") " + link['title'])
     
-    queue.put(link['title'])
-    
-    
-
