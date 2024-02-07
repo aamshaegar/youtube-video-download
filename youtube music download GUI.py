@@ -1,6 +1,11 @@
-from pytube.exceptions import RegexMatchError
-from multiprocessing import Queue
+from lib.install_lib import install_all_requirements
+install_all_requirements()
+
+
 from lib.interface_lib import *
+from pytube.exceptions import RegexMatchError
+from pytube.exceptions import AgeRestrictedError
+from multiprocessing import Queue
 import PySimpleGUI as sg
 import urllib.request
 from PIL import Image
@@ -11,7 +16,7 @@ import io
 __name__ = "__MAIN__"
 
 def main():
-    
+
     notify_queue = Queue()
     notify_queue2 = Queue()
     search_text = ""
@@ -69,7 +74,7 @@ def main():
 
 
     check_temp_size()
-    window = sg.Window(title="Youtube music download!", layout=layout, finalize=True)
+    window = sg.Window(title="Youtube music download!", layout=layout, finalize=True, resizable=True)
     window['FIND_TEXT'].bind("<Return>", "_Enter")
 
 
@@ -87,7 +92,6 @@ def main():
             val = notify_queue.get_nowait()
             if val is not None: 
                 sg.popup_notify(val + " has been successfully downloaded!")
-       
         
         if event == "Exit" or event == sg.WIN_CLOSED:
             os._exit(0)
@@ -162,7 +166,11 @@ def main():
                     if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text))
                     else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None))
                     t.start()             
-             
+
+                except AgeRestrictedError as age:
+                    print(e)
+                    print()
+                    sg.popup_error("This content is age restricted, so cannot be downloaded!... :( ") 
                 
                 except RegexMatchError as reg:
                     regex_error()   
@@ -186,7 +194,11 @@ def main():
                     if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text))
                     else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None))
                     t.start()
-            
+                
+                except AgeRestrictedError as age:
+                    print(e)
+                    print()
+                    sg.popup_error("This content is age restricted, so cannot be downloaded!... :( ") 
             
                 except RegexMatchError as reg:
                     regex_error()   

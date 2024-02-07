@@ -65,7 +65,6 @@ def download_video(url_video, low_resolution, rename = None):
     except ConnectionError:
         print("Error: No internet!")
     videos = youtube.streams.all()
-    #print(videos)
     vid = list(enumerate(videos))
     
     video_selected = [(vid[i],i) for i in range(0,len(vid)) 
