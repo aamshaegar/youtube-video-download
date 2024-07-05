@@ -3,6 +3,8 @@ import PySimpleGUI as sg
 import os.path
 
 
+from pytube.exceptions import RegexMatchError
+from pytube.exceptions import AgeRestrictedError
 
 def popup(text, title='Message', modal=True, text_color=None, background_color=None,font=('Courier New', 12)):
     
@@ -47,17 +49,25 @@ def regex_error():
     4) save...
     
     """.strip()              
-    popup(message, title='Library Not Up to Date', text_color='white', background_color='green')
- 
+    popup(message, title='Library Not Up to Date', text_color='white', background_color='green',auto_close=True, auto_close_duration=2)
 
 
 
-def three_params(video_name, limit, file_type):
+
+def three_params(video_name, limit, videoSearch = None):
     """ Three params Select! """
 
-    video = find_videos_per_name(video_name, limit)
-    videos_list = list_of_all_content_found(video)
-    return videos_list
+    if not videoSearch:
+        video, search = find_videos_per_name(video_name, limit)
+        videos_list = list_of_all_content_found(video)
+        return videos_list, search
+    else:
+        videoSearch.next()
+        json_result = videoSearch.result()
+        video = json_result['result']
+        videos_list = list_of_all_content_found(video)
+        return videos_list, videoSearch
+        
 
 
 def check_temp_size():
@@ -69,13 +79,26 @@ def check_temp_size():
             os.remove("./temp/" + file)
 
 
-def download_thread(number, notify_queue, notify_queue2, link, type, low_resolution, rename_text):
+def download_thread(sg, number, notify_queue, notify_queue2, link, type, low_resolution, rename_text, output="default"):
     """Download content in a separate thread"""
 
-    new_text = str(number)  + ") Downloading " + link['title'] + "..."
-    notify_queue2.put(new_text)
-    print("starting downloading", link['title'])
-    if type == "audio": select_download_format_type(link['link'], type, rename=rename_text)
-    else: select_download_format_type(link['link'], type, low_resolution=low_resolution, rename=rename_text)
-    notify_queue.put(str(number)  + ") " + link['title'])
+    try:
+        new_text = str(number)  + ") Downloading " + link['title'] + "..."
+        notify_queue2.put(new_text)
+        print("starting downloading", link['title'])
+        if type == "audio": select_download_format_type(link['link'], type, output = output, rename=rename_text)
+        else: select_download_format_type(link['link'], type, low_resolution=low_resolution, output=output, rename=rename_text)
+        notify_queue.put(str(number)  + ") " + link['title'])
+    except AgeRestrictedError as age:
+        print(e)
+        print()
+        sg.popup_quick_message(" \n\n This content is age restricted, so cannot be downloaded!... :( \n\n ", text_color='red', auto_close=True, auto_close_duration=2, background_color='black') 
+
+    except RegexMatchError as reg:
+        regex_error()   
+        
+    except Exception as e:
+        print(e)
+        print()
+        sg.popup_quick_message("\n\n This content cannot be downloaded!... :( \n\n", text_color='red', auto_close=True, auto_close_duration=2, background_color='black')
     

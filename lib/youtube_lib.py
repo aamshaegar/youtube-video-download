@@ -28,7 +28,7 @@ def estimate_download_time(url_video):
 
 
 
-def download_audio(url_video, rename = None):
+def download_audio(url_video, output, rename = None):
     """ Convert single video found in mp3 format.
     :param url_video: str """
 
@@ -38,7 +38,8 @@ def download_audio(url_video, rename = None):
         print("Error: No internet!")
 
     video_found = youtube.streams.filter(only_audio=True).first()
-    destination = "./audio_output"
+    if output == "default":destination = "./audio_output"
+    else: destination = output
 
     x = datetime.datetime.now()
     format = "_" + x.strftime("%H") + " " + x.strftime("%M") + " " + x.strftime("%S")
@@ -55,7 +56,7 @@ def download_audio(url_video, rename = None):
 
 
 
-def download_video(url_video, low_resolution, rename = None):
+def download_video(url_video, low_resolution, output, rename = None):
     """ Convert single video found in mp4 format.
     :param url_video: str """
 
@@ -84,7 +85,8 @@ def download_video(url_video, low_resolution, rename = None):
         plus_name = "(720p) "
     
     #resolution = int(input("Enter the index number of the video : "))
-    destination = "./video_output"
+    if output == "default": destination = "./video_output"
+    else: destination = output
     out_file = selected[0][1].download(destination)
     
     x = datetime.datetime.now()
@@ -100,24 +102,11 @@ def download_video(url_video, low_resolution, rename = None):
 
 
 
-def select_download_format_type(url_video, file_type, low_resolution=False, rename = None):
+def select_download_format_type(url_video, file_type, low_resolution=False, output="default",rename = None):
     """ Select what format do you like! """
     
-    #rename = input("If you want, type a new name for the file, otherwise blank\n")
-    #if rename == "": rename = None 
-
-    file_path = ""
-    if file_type == 'audio': 
-        file_path = download_audio(url_video, rename)
-        
-        #response = input("\nWould you like to store music on server? (Y/N)")
-        #if(response.lower() in ['y', 'yes']):
-        #    store_music(file_path)
-        #else:
-        #    print("Session closed!")
-            
-    else: 
-        file_path = download_video(url_video, low_resolution, rename)
+    if file_type == 'audio':  file_path = download_audio(url_video, output,rename)
+    else: file_path = download_video(url_video, low_resolution, output, rename)
 
     return file_path
     
@@ -134,7 +123,7 @@ def find_videos_per_name(video_search_name, limit_search):
 
     videosSearch = VideosSearch(video_search_name, limit = limit_search)
     json_result = videosSearch.result()
-    return json_result['result']
+    return json_result['result'], videosSearch
 
 
 

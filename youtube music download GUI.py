@@ -13,6 +13,8 @@ import threading
 import io
 
 
+
+
 __name__ = "__MAIN__"
 
 def main():
@@ -20,11 +22,14 @@ def main():
     notify_queue = Queue()
     notify_queue2 = Queue()
     search_text = ""
+    old_serach_text = ""
     videos_list = []
     get_video_value = []
     actual_image = ""
     rename_text = ""
     number_bar = 0
+    search = None
+    output_folder = "default"
 
 
     file_list_column = [
@@ -33,14 +38,18 @@ def main():
             sg.In(size=(40, 1), enable_events=True, key="FIND_TEXT"),
             sg.Button("Find", size=(5, 1), enable_events=True, key="FIND_BUTTON")],
 
-        [sg.Listbox(values=[], enable_events=True, size=(50, 20),  font=(
+        [sg.Listbox(values=[], enable_events=True, size=(41, 19),  font=(
             'Calibri Bold', 12), expand_y=True, horizontal_scroll=True,  key="FILE_LIST")],
+
+
+        [sg.Button("Next page", size=(15, 1), enable_events=True, key="NEXT_BUTTON", visible=False)]
+        #sg.Button("Previous page", size=(10, 1), enable_events=True, key="PREVIOUS_BUTTON", visible=False), 
 
     ]
 
     image_viewer_column = [
 
-        [sg.Multiline("Type a content (press Enter), then select a music to download.", size=(42, 22), disabled=True,  font=('Calibri Bold', 12), enable_events=True, key="TEXT_RIGHT")],
+        [sg.Multiline("Type a content (press Enter), then select a music to download.", size=(40, 22), disabled=True,  font=('Calibri Bold', 12), enable_events=True, key="TEXT_RIGHT")],
         [sg.Button("Download audio", size=(20, 1), enable_events=True, key="DOWNLOAD_AUDIO"),
             sg.Button("Download video", size=(20, 1), enable_events=True, key="DOWNLOAD_VIDEO")]
 
@@ -52,8 +61,11 @@ def main():
         [sg.Image(source=actual_image, enable_events=True, key="IMAGE",size=(38, 50))],
         [sg.Text("Would you like to store the .mp3 file on the server?", justification="center", visible=False, size=(38, 2))],
         
-        [sg.Text("Rename file?", size=(10,1)),
-            sg.In(size=(26, 1), enable_events=True, key="RENAME_TEXT", font=('Calibri Bold', 12))],
+        [sg.T("")],
+        [sg.Text("Rename file?", size=(12,1)), sg.In(size=(27, 1), enable_events=True, key="RENAME_TEXT", font=('Calibri Bold', 12))],
+
+
+        [sg.Text("Output folder?", size=(12,1)), sg.In("default", key="INPUT_BROWSE", size=(23,1),font=('Calibri Bold', 10)), sg.FolderBrowse(key="BROWSE")],
         
         [sg.Radio('Download Video 360p', 1, default=True, enable_events=True, key="RADIO1"),
         sg.Radio('Download Video 720p', 1, enable_events=True, key="RADIO2"),],
@@ -98,18 +110,42 @@ def main():
 
         elif (event == "FIND_TEXT"):
             search_text = values['FIND_TEXT']
+            old_serach_text = search_text
 
         elif (event == "FIND_BUTTON") or (event == "FIND_TEXT" + "_Enter"):
             if search_text == "":
                 window['TEXT_RIGHT'].update("TYPE A CONTENT, FIRST!")
-                
+        
             else:
                 try:
-                    videos_list = three_params(search_text, 20, "audio")
-                except Exception:
+                    videos_list, s = three_params(search_text, 19, videoSearch=None)
+                    search = s
+                    #window['PREVIOUS_BUTTON'].update(visible = True)
+                    window['NEXT_BUTTON'].update(visible = True)
+                    
+                    
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc() 
+                    print(e)
                     sg.popup("No connection. Please, connect to internet!\nRetry?", title="Info", button_type=sg.POPUP_BUTTONS_OK)
                 lista = [el['title'] for el in videos_list]
                 window['FILE_LIST'].update(lista)
+
+        
+        elif event == "NEXT_BUTTON":
+            if search_text != "":
+                try:
+                    videos_list, s = three_params(search_text, 19, videoSearch=search)
+                    
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc() 
+                    print(e)
+                    sg.popup("No connection. Please, connect to internet!\nRetry?", title="Info", button_type=sg.POPUP_BUTTONS_OK)
+                lista = [el['title'] for el in videos_list]
+                window['FILE_LIST'].update(lista)
+
 
         elif event == "FILE_LIST":
             if len(values['FILE_LIST']) > 0:
@@ -161,25 +197,13 @@ def main():
                 window['TEXT_RIGHT'].update("TYPE A CONTENT, FIRST!")
             else:
                 popup_wait()
-                try:
-                    number_bar += 1
-                    if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text))
-                    else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None))
-                    t.start()             
-
-                except AgeRestrictedError as age:
-                    print(e)
-                    print()
-                    sg.popup_error("This content is age restricted, so cannot be downloaded!... :( ") 
+                number_bar += 1
                 
-                except RegexMatchError as reg:
-                    regex_error()   
-                    
-                except Exception as e:
-                    print(e)
-                    print()
-                    sg.popup_error("This content cannot be downloaded!... :( ")             
-                    
+                if not os.path.exists(values['INPUT_BROWSE']): output_folder = "default"
+                else: output_folder = values['INPUT_BROWSE']
+                if rename_text != "": t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text, output_folder))
+                else: t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None, output_folder))
+                t.start()                    
                     
 
         elif event == "DOWNLOAD_VIDEO":
@@ -187,26 +211,14 @@ def main():
                 window['TEXT_RIGHT'].update("TYPE A CONTENT, FIRST!")
             else:
                 
-                popup_wait()
-                try:
-                    number_bar += 1
-                    resolution = values['RADIO1']
-                    if rename_text != "": t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text))
-                    else: t = threading.Thread(target=download_thread, args = (number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None))
-                    t.start()
+                popup_wait()            
+                number_bar += 1
                 
-                except AgeRestrictedError as age:
-                    print(e)
-                    print()
-                    sg.popup_error("This content is age restricted, so cannot be downloaded!... :( ") 
-            
-                except RegexMatchError as reg:
-                    regex_error()   
-                    
-                except Exception as e:
-                    print(e)
-                    print()
-                    sg.popup_error("This content cannot be downloaded!... :( ")
-
+                if not os.path.exists(values['INPUT_BROWSE']): output_folder = "default"
+                else: output_folder = values['INPUT_BROWSE']
+                resolution = values['RADIO1']
+                if rename_text != "": t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text, output_folder))
+                else: t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None, output_folder))
+                t.start()
 
 main()
