@@ -1,0 +1,13 @@
+ERROR: There are some library not up to date!!!
+    
+    - ERROR ON : C:..../Programs/Python/Python310/Lib/site-packages/pytube/cipher.py 
+    - ON LINUX: /home/USER/.local/lib/python3.10/site-packages/pytube/cipher.py
+    - ERROR_TYPE: RegexMatchError: __init__: could not find match for ^\w+\W
+    
+    To solve this issue, check on https://github.com/pytube/pytube/issues/1326 
+    Or follow these istructions:
+    
+    1) go on .../pytube/cipher.py
+    2) go on line 30
+    3) replace 'var_regex = re.compile(r"^\w+\W")' with var_regex = re.compile(r"^\$*\w+\W")
+    4) save...

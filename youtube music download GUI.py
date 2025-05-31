@@ -4,7 +4,7 @@ install_all_requirements()
 
 from lib.interface_lib import *
 from pytube.exceptions import RegexMatchError
-from pytube.exceptions import AgeRestrictedError
+# from pytube.exceptions import AgeRestrictedError
 from multiprocessing import Queue
 import PySimpleGUI as sg
 import urllib.request
@@ -201,8 +201,9 @@ def main():
                 
                 if not os.path.exists(values['INPUT_BROWSE']): output_folder = "default"
                 else: output_folder = values['INPUT_BROWSE']
-                if rename_text != "": t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text, output_folder))
-                else: t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None, output_folder))
+                if rename_text != "": t = threading.Thread(target=download_audio_yt, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], rename_text, output_folder))
+                else: t = threading.Thread(target=download_audio_yt, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None, output_folder))
+                # else: t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "audio", values['RADIO1'], None, output_folder))
                 t.start()                    
                     
 
@@ -217,8 +218,8 @@ def main():
                 if not os.path.exists(values['INPUT_BROWSE']): output_folder = "default"
                 else: output_folder = values['INPUT_BROWSE']
                 resolution = values['RADIO1']
-                if rename_text != "": t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text, output_folder))
-                else: t = threading.Thread(target=download_thread, args = (sg, number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None, output_folder))
+                if rename_text != "": t = threading.Thread(target=download_video_yt, args = (sg, number_bar,notify_queue, notify_queue2, get_video_value, "video", resolution, rename_text, output_folder))
+                else: t = threading.Thread(target=download_video_yt, args = (sg, number_bar,notify_queue, notify_queue2,  get_video_value, "video", resolution ,None, output_folder))
                 t.start()
 
 main()

@@ -17,6 +17,4 @@ def install_all_requirements():
     try: import PIL
     except ImportError as error:
         os.system('pip install pillow')
-        
     #os.system("pip install -r ./requirements.txt")
-

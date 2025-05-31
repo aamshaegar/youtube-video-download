@@ -1,4 +1,4 @@
-youtube-search-python==1.6.6
+Pillow==10.4.0
+PySimpleGUI==5.0.8.2
 pytube==15.0.0
-PySimpleGUI==4.60.5
-pillow==10.2.0
+youtube_search_python==1.6.6
